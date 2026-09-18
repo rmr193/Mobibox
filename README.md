@@ -8,6 +8,7 @@ A responsive **Movie Explorer Application** built with **React** and **Vite**, f
 
 This application was developed as part of the **Movie Explorer Assignment**. Users can browse popular TV shows and movies, search for specific titles in real-time, and view comprehensive information (ratings, summaries, release dates, and platforms) inside an interactive details modal.
 
+- **Live Deployment:** [https://mobibox-theta.vercel.app/](https://mobibox-theta.vercel.app/)
 - **GitHub Repository:** [https://github.com/rmr193/Mobibox](https://github.com/rmr193/Mobibox)
 - **Data Source:** [TVMaze API](https://www.tvmaze.com/api)
 
@@ -136,16 +137,3 @@ npm run build
 
 ---
 
-## 🌐 Deployment Instructions
-
-### Vercel
-1. Push your repository to GitHub.
-2. Sign in to [Vercel](https://vercel.com) and click **"Add New Project"**.
-3. Select your repository `Mobibox`.
-4. Vite will be automatically detected. Click **Deploy**.
-
-### Netlify
-1. Log in to [Netlify](https://netlify.com) and select **"Add new site" > "Import an existing project"**.
-2. Connect your GitHub repository.
-3. Build command: `npm run build`, Publish directory: `dist`.
-4. Click **Deploy site**.
