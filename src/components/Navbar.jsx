@@ -1,116 +1,86 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Clapperboard, Bookmark, Compass, Menu, X } from 'lucide-react';
-import { useWatchlist } from '../context/WatchlistContext';
+import { Compass, Menu, X } from 'lucide-react';
 
 export default function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { count } = useWatchlist();
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleNavClick = () => {
-    setMobileMenuOpen(false);
+  const handleCloseMenu = () => {
+    setMenuOpen(false);
   };
 
   return (
-    <header className="navbar">
-      <div className="container navbar-inner">
-        {/* Brand Logo */}
-        <Link to="/" className="brand-logo" onClick={handleNavClick}>
-          <div className="brand-icon">
-            <Clapperboard size={22} strokeWidth={2.4} />
-          </div>
-          <span>MovieExplorer<span className="dot">.</span></span>
+    <nav className="navbar">
+      <div className="container navbar-container">
+        {/* Logo / Brand Name */}
+        <Link to="/" className="navbar-brand" onClick={handleCloseMenu}>
+          <span className="brand-logo-icon">🎬</span>
+          <span className="brand-name">MovieExplorer</span>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="nav-links">
+        {/* Navigation Links */}
+        <div className="navbar-links">
           <NavLink
             to="/"
             end
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
           >
             Home
           </NavLink>
           <NavLink
             to="/movies"
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
           >
             Movies
           </NavLink>
-          <NavLink
-            to="/watchlist"
-            className={({ isActive }) => `watchlist-nav-link ${isActive ? 'active' : ''}`}
-          >
-            <Bookmark size={16} />
-            <span>Watchlist</span>
-            {count > 0 && <span className="badge-count">{count}</span>}
-          </NavLink>
-        </nav>
+        </div>
 
-        {/* Right CTA / Action Button */}
-        <div className="nav-actions">
+        {/* Prominent CTA button to navigate to Movie Listing Page */}
+        <div className="navbar-cta-wrapper">
           <button
-            className="btn-primary"
+            type="button"
+            className="navbar-cta-btn"
             onClick={() => navigate('/movies')}
-            title="Browse all movies and shows"
           >
-            <Compass size={17} />
+            <Compass size={16} />
             <span>Explore Movies</span>
           </button>
-
-          {/* Mobile Menu Toggle Button */}
-          <button
-            className="mobile-toggle-btn"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle navigation menu"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
+
+        {/* Mobile Menu Toggle Button */}
+        <button
+          type="button"
+          className="mobile-menu-btn"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle navigation menu"
+        >
+          {menuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </div>
 
-      {/* Mobile Drawer Menu */}
-      {mobileMenuOpen && (
-        <div className="mobile-drawer open">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            onClick={handleNavClick}
-          >
+      {/* Mobile Menu Dropdown */}
+      {menuOpen && (
+        <div className="mobile-menu-dropdown">
+          <NavLink to="/" end className="mobile-nav-item" onClick={handleCloseMenu}>
             Home
           </NavLink>
-          <NavLink
-            to="/movies"
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            onClick={handleNavClick}
-          >
-            Browse Movies & Shows
-          </NavLink>
-          <NavLink
-            to="/watchlist"
-            className={({ isActive }) => `watchlist-nav-link ${isActive ? 'active' : ''}`}
-            onClick={handleNavClick}
-            style={{ width: 'fit-content' }}
-          >
-            <Bookmark size={16} />
-            <span>My Watchlist</span>
-            {count > 0 && <span className="badge-count">{count}</span>}
+          <NavLink to="/movies" className="mobile-nav-item" onClick={handleCloseMenu}>
+            Movies
           </NavLink>
           <button
-            className="btn-primary"
-            style={{ width: '100%', marginTop: '0.5rem' }}
+            type="button"
+            className="navbar-cta-btn mobile-cta"
             onClick={() => {
-              handleNavClick();
+              handleCloseMenu();
               navigate('/movies');
             }}
           >
-            <Compass size={18} />
-            <span>Explore All Movies</span>
+            <Compass size={16} />
+            <span>Explore Movies</span>
           </button>
         </div>
       )}
-    </header>
+    </nav>
   );
 }

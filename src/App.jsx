@@ -1,25 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import MoviesPage from './pages/MoviesPage';
-import WatchlistPage from './pages/WatchlistPage';
 import MovieModal from './components/MovieModal';
-import { WatchlistProvider } from './context/WatchlistContext';
-
-// Scroll to top helper on navigation
-function ScrollToTop() {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-
-  return null;
-}
 
 export default function App() {
+  // State to track which movie is currently selected for the details modal
   const [selectedMovie, setSelectedMovie] = useState(null);
 
   const handleSelectMovie = (movie) => {
@@ -31,27 +19,35 @@ export default function App() {
   };
 
   return (
-    <WatchlistProvider>
-      <div className="app-layout" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <ScrollToTop />
-        <Navbar />
+    <div className="app-container">
+      {/* Top Navbar */}
+      <Navbar />
 
-        <main style={{ flex: 1 }}>
-          <Routes>
-            <Route path="/" element={<HomePage onSelectMovie={handleSelectMovie} />} />
-            <Route path="/movies" element={<MoviesPage onSelectMovie={handleSelectMovie} />} />
-            <Route path="/watchlist" element={<WatchlistPage onSelectMovie={handleSelectMovie} />} />
-            <Route path="*" element={<HomePage onSelectMovie={handleSelectMovie} />} />
-          </Routes>
-        </main>
+      {/* Main Content Pages */}
+      <main className="main-content">
+        <Routes>
+          <Route
+            path="/"
+            element={<HomePage onSelectMovie={handleSelectMovie} />}
+          />
+          <Route
+            path="/movies"
+            element={<MoviesPage onSelectMovie={handleSelectMovie} />}
+          />
+          <Route
+            path="*"
+            element={<HomePage onSelectMovie={handleSelectMovie} />}
+          />
+        </Routes>
+      </main>
 
-        <Footer />
+      {/* Footer */}
+      <Footer />
 
-        {/* Global Movie Details Modal */}
-        {selectedMovie && (
-          <MovieModal movie={selectedMovie} onClose={handleCloseModal} />
-        )}
-      </div>
-    </WatchlistProvider>
+      {/* Movie Details Modal */}
+      {selectedMovie && (
+        <MovieModal movie={selectedMovie} onClose={handleCloseModal} />
+      )}
+    </div>
   );
 }

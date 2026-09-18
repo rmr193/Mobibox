@@ -1,44 +1,41 @@
 import { Search, X } from 'lucide-react';
 
-export default function SearchBar({ value, onChange, onClear, onSubmit, placeholder = 'Search for a movie or TV show...' }) {
+export default function SearchBar({ value, onChange, onClear, onSubmit }) {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (onSubmit) {
+      onSubmit(value);
+    }
+  };
+
   return (
-    <div className="search-bar-container">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (onSubmit) onSubmit(value);
-        }}
-        className="search-input-box"
-      >
-        <div className="search-icon-left">
-          <Search size={20} />
-        </div>
+    <form className="search-form" onSubmit={handleSubmit}>
+      <div className="search-box">
+        <Search size={20} className="search-icon" />
 
         <input
           type="text"
-          id="movie-search-input"
-          placeholder={placeholder}
+          placeholder="🔍 Search for a movie..."
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          autoComplete="off"
+          className="search-input"
         />
 
         {value && (
           <button
             type="button"
-            className="clear-search-btn"
+            className="search-clear-btn"
             onClick={onClear}
-            title="Clear search"
-            aria-label="Clear search query"
+            aria-label="Clear search"
           >
             <X size={16} />
           </button>
         )}
 
-        <button type="submit" className="search-submit-btn">
-          <span>Search</span>
+        <button type="submit" className="search-btn">
+          Search
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }

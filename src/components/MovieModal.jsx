@@ -1,27 +1,17 @@
 import { useEffect } from 'react';
-import {
-  X,
-  Star,
-  Calendar,
-  Clock,
-  Bookmark,
-  Film,
-  ExternalLink,
-} from 'lucide-react';
-import { useWatchlist } from '../context/WatchlistContext';
+import { X, Star, Calendar, Clock, Film } from 'lucide-react';
+import { cleanSummary } from '../api/tvmaze';
 
 export default function MovieModal({ movie, onClose }) {
-  const { isInWatchlist, toggleWatchlist } = useWatchlist();
-
-  // Handle ESC key press and body scroll locking
+  // Close modal when pressing Escape key and disable background scrolling
   useEffect(() => {
     if (!movie) return;
 
-    const handleKeyDown = (e) => {
+    function handleKeyDown(e) {
       if (e.key === 'Escape') {
         onClose();
       }
-    };
+    }
 
     document.body.classList.add('modal-open');
     window.addEventListener('keydown', handleKeyDown);
@@ -34,46 +24,38 @@ export default function MovieModal({ movie, onClose }) {
 
   if (!movie) return null;
 
-  const isSaved = isInWatchlist(movie.id);
-  const backdropUrl = movie.image?.original || movie.image?.medium || null;
-  const posterUrl = movie.image?.medium || movie.image?.original || null;
+  // Backdrop or original image if available
+  const backdropImage = movie.image?.original || movie.image?.medium || null;
+  const rating = movie.rating?.average ? movie.rating.average : 'N/A';
+  const releaseDate = movie.premiered || 'Unknown';
+  const plainSummary = cleanSummary(movie.summary);
 
-  const handleBackdropClick = (e) => {
+  // Close modal if user clicks outside the modal content (on the overlay backdrop)
+  const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
   return (
-    <div
-      className="modal-overlay"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-movie-title"
-    >
-      <div className="modal-content">
-        {/* Top-Right Close Icon Button */}
+    <div className="modal-overlay" onClick={handleOverlayClick}>
+      <div className="modal-container">
+        {/* Top-Right ✕ Close Button */}
         <button
           type="button"
-          className="modal-close-icon-btn"
+          className="modal-close-icon"
           onClick={onClose}
           aria-label="Close modal"
-          id="modal-close-btn"
         >
           <X size={20} />
         </button>
 
-        {/* Modal Backdrop Header */}
-        <div className="modal-header-hero">
-          {backdropUrl ? (
-            <img
-              src={backdropUrl}
-              alt={`${movie.name} Backdrop`}
-              className="modal-backdrop-img"
-            />
+        {/* Hero Backdrop Image */}
+        <div className="modal-hero-image">
+          {backdropImage ? (
+            <img src={backdropImage} alt={movie.name} />
           ) : (
-            <div className="poster-placeholder" style={{ height: '100%' }}>
+            <div className="modal-hero-placeholder">
               <Film size={48} />
               <span>{movie.name}</span>
             </div>
@@ -81,65 +63,38 @@ export default function MovieModal({ movie, onClose }) {
           <div className="modal-hero-gradient" />
         </div>
 
-        {/* Modal Content Body */}
-        <div className="modal-body">
-          {/* Top Row: Poster Thumbnail & Title Area */}
-          <div className="modal-top-row">
-            <div className="modal-poster-thumb">
-              {posterUrl ? (
-                <img src={posterUrl} alt={`${movie.name} Poster`} />
-              ) : (
-                <div className="poster-placeholder" style={{ height: '100%' }}>
-                  <Film size={24} />
-                </div>
-              )}
-            </div>
+        {/* Modal Information Body */}
+        <div className="modal-content-body">
+          <h2 className="modal-title">{movie.name}</h2>
 
-            <div className="modal-title-area">
-              <h2 id="modal-movie-title" className="modal-title">
-                {movie.name}
-              </h2>
-
-              <div className="modal-quick-meta">
-                {/* Rating Badge */}
-                <div className="meta-chip rating-chip">
-                  <Star size={14} fill="#fbbf24" stroke="#fbbf24" />
-                  <span>{movie.rating ? `${movie.rating} / 10` : 'No Rating'}</span>
-                </div>
-
-                {/* Release Year */}
-                <div className="meta-chip">
-                  <Calendar size={14} />
-                  <span>{movie.premiered ? movie.premiered : movie.year}</span>
-                </div>
-
-                {/* Runtime */}
-                {movie.runtime && (
-                  <div className="meta-chip">
-                    <Clock size={14} />
-                    <span>{movie.runtime} mins</span>
-                  </div>
-                )}
-
-                {/* Status Badge */}
-                {movie.status && (
-                  <span
-                    className={`status-badge ${
-                      movie.status.toLowerCase() === 'running' ? 'running' : 'ended'
-                    }`}
-                  >
-                    {movie.status}
-                  </span>
-                )}
-              </div>
-            </div>
+          {/* Quick Badges: Rating & Release Date */}
+          <div className="modal-badges-row">
+            <span className="modal-badge rating">
+              <Star size={14} fill="#fbbf24" stroke="#fbbf24" />
+              <span>Rating: {rating} / 10</span>
+            </span>
+            <span className="modal-badge date">
+              <Calendar size={14} />
+              <span>Release: {releaseDate}</span>
+            </span>
+            {movie.runtime && (
+              <span className="modal-badge runtime">
+                <Clock size={14} />
+                <span>{movie.runtime} mins</span>
+              </span>
+            )}
+            {movie.status && (
+              <span className="modal-badge status">
+                {movie.status}
+              </span>
+            )}
           </div>
 
-          {/* Genres Badges */}
+          {/* Genres */}
           {movie.genres && movie.genres.length > 0 && (
-            <div className="modal-genres-list">
+            <div className="modal-genres">
               {movie.genres.map((genre) => (
-                <span key={genre} className="modal-genre-tag">
+                <span key={genre} className="genre-tag">
                   {genre}
                 </span>
               ))}
@@ -147,76 +102,32 @@ export default function MovieModal({ movie, onClose }) {
           )}
 
           {/* Overview / Summary */}
-          <div>
-            <h3 className="modal-section-title">Overview</h3>
-            <div
-              className="modal-overview-text"
-              dangerouslySetInnerHTML={{ __html: movie.summaryHtml }}
-            />
+          <div className="modal-overview-section">
+            <h3>Overview:</h3>
+            <p>{plainSummary}</p>
           </div>
 
-          {/* Detailed Metadata Grid */}
-          <div className="modal-details-grid">
-            <div className="detail-item">
-              <span className="detail-label">Network / Platform</span>
-              <span className="detail-value">{movie.networkName}</span>
-            </div>
-
-            <div className="detail-item">
-              <span className="detail-label">Original Language</span>
-              <span className="detail-value">{movie.language || 'English'}</span>
-            </div>
-
-            <div className="detail-item">
-              <span className="detail-label">Type</span>
-              <span className="detail-value">{movie.type || 'Scripted'}</span>
-            </div>
-
-            {movie.scheduleDays && (
-              <div className="detail-item">
-                <span className="detail-label">Schedule</span>
-                <span className="detail-value">
-                  {movie.scheduleDays} {movie.scheduleTime ? `at ${movie.scheduleTime}` : ''}
-                </span>
-              </div>
+          {/* Additional Information */}
+          <div className="modal-extra-info">
+            <p>
+              <strong>Language:</strong> {movie.language || 'English'}
+            </p>
+            <p>
+              <strong>Network:</strong> {movie.network?.name || movie.webChannel?.name || 'Various'}
+            </p>
+            {movie.officialSite && (
+              <p>
+                <strong>Official Site:</strong>{' '}
+                <a href={movie.officialSite} target="_blank" rel="noreferrer">
+                  Visit Website ↗
+                </a>
+              </p>
             )}
           </div>
 
-          {/* Modal Action Bar */}
-          <div className="modal-action-bar">
-            <div className="modal-action-bar-left">
-              <button
-                type="button"
-                className={`btn-watchlist-toggle ${isSaved ? 'active' : ''}`}
-                onClick={() => toggleWatchlist(movie)}
-              >
-                <Bookmark
-                  size={17}
-                  fill={isSaved ? '#fff' : 'none'}
-                  stroke="currentColor"
-                />
-                <span>{isSaved ? 'In Watchlist' : 'Add to Watchlist'}</span>
-              </button>
-
-              {movie.officialSite && (
-                <a
-                  href={movie.officialSite}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-official-site"
-                >
-                  <span>Official Site</span>
-                  <ExternalLink size={15} />
-                </a>
-              )}
-            </div>
-
-            <button
-              type="button"
-              className="btn-close-modal"
-              onClick={onClose}
-              aria-label="Close movie details dialog"
-            >
+          {/* Bottom Close Button */}
+          <div className="modal-footer-btn">
+            <button type="button" className="btn-close-bottom" onClick={onClose}>
               <X size={16} />
               <span>Close</span>
             </button>
