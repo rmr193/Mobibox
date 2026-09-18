@@ -1,105 +1,136 @@
 import { useState, useEffect } from 'react';
 import SearchBar from '../components/SearchBar';
 import MovieCard from '../components/MovieCard';
-import { getAllShows, searchShows } from '../api/tvmaze';
 
 export default function MoviesPage({ onSelectMovie }) {
-  // State variables
+  // Store the list of movies
   const [movies, setMovies] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  // Store user search input
+  const [searchTerm, setSearchTerm] = useState('');
+  // Loading and error states
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
-  // 1. Fetch initial shows when component mounts
+  // 1. Fetch all default movies on page load
   useEffect(() => {
-    async function fetchInitialMovies() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getAllShows();
+    fetch('https://api.tvmaze.com/shows')
+      .then((response) => response.json())
+      .then((data) => {
         setMovies(data);
-      } catch (err) {
-        console.error('Error fetching movies:', err);
-        setError('Could not load movies. Please check your internet connection.');
-      } finally {
         setLoading(false);
-      }
-    }
-
-    fetchInitialMovies();
+      })
+      .catch((err) => {
+        console.error('Error fetching movies:', err);
+        setError('Failed to load movies. Please check your internet connection.');
+        setLoading(false);
+      });
   }, []);
 
-  // 2. Search movies when search query changes
-  useEffect(() => {
-    // If search is empty, load all shows again
-    if (!searchQuery.trim()) {
-      getAllShows()
-        .then((data) => setMovies(data))
-        .catch((err) => {
-          console.error('Error loading default movies:', err);
-          setError('Failed to load movies.');
-        });
+  // Function to reload all movies
+  const fetchAllMovies = () => {
+    setLoading(true);
+    setError('');
+
+    fetch('https://api.tvmaze.com/shows')
+      .then((response) => response.json())
+      .then((data) => {
+        setMovies(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error fetching movies:', err);
+        setError('Failed to load movies. Please check your internet connection.');
+        setLoading(false);
+      });
+  };
+
+  // 2. Function to search movies
+  const searchMovies = (query) => {
+    if (!query || query.trim() === '') {
+      fetchAllMovies();
       return;
     }
 
-    // Set a timer to debounce the search (so it waits until the user finishes typing)
-    const timeoutId = setTimeout(async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const results = await searchShows(searchQuery);
+    setLoading(true);
+    setError('');
+
+    fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`)
+      .then((response) => response.json())
+      .then((data) => {
+        // TVMaze search returns [{ score, show }, ...], extract the show objects
+        const results = data.map((item) => item.show);
         setMovies(results);
-      } catch (err) {
+        setLoading(false);
+      })
+      .catch((err) => {
         console.error('Error searching movies:', err);
         setError('Error searching movies. Please try again.');
-      } finally {
         setLoading(false);
-      }
-    }, 400);
+      });
+  };
 
-    // Cleanup timeout when user types before 400ms
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  // Handle typing in the search box
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    if (value.trim() === '') {
+      fetchAllMovies();
+    } else {
+      searchMovies(value);
+    }
+  };
 
-  // Handle clearing the search
-  const handleClear = () => {
-    setSearchQuery('');
+  // Handle clicking the Search button or pressing Enter
+  const handleSearchSubmit = () => {
+    searchMovies(searchTerm);
+  };
+
+  // Handle clicking the Clear button (✕)
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    fetchAllMovies();
   };
 
   return (
     <div className="movies-page">
       <div className="container">
-        {/* Page Title */}
+        {/* Page Header */}
         <div className="movies-page-header">
           <h1>Browse & Search Movies</h1>
           <p>Find your favorite movies and shows from our live database.</p>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Bar Component */}
         <div className="search-section">
           <SearchBar
-            value={searchQuery}
-            onChange={(val) => setSearchQuery(val)}
-            onClear={handleClear}
+            value={searchTerm}
+            onChange={handleSearchChange}
+            onSubmit={handleSearchSubmit}
+            onClear={handleClearSearch}
           />
         </div>
 
-        {/* Loading Indicator */}
-        {loading && <div className="status-message">Loading movies...</div>}
+        {/* Loading Message */}
+        {loading && (
+          <div className="status-message">
+            <p>Loading movies, please wait...</p>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && !loading && (
-          <div className="status-message error">{error}</div>
+          <div className="status-message error">
+            <p>{error}</p>
+          </div>
         )}
 
         {/* Empty State */}
         {!loading && !error && movies.length === 0 && (
           <div className="status-message empty">
-            No movies found matching "{searchQuery}". Try searching for another title!
+            <p>No movies found matching "{searchTerm}". Try searching for another title!</p>
           </div>
         )}
 
-        {/* Movie Cards Grid */}
+        {/* Movies Grid */}
         {!loading && !error && movies.length > 0 && (
           <div className="movies-grid">
             {movies.map((movie) => (
